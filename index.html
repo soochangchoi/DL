@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>🕵️‍♂️ AI 탐정: 사건 추리 시스템</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      background-color: #121212;
+      color: #f5f5f5;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2.8em;
+      color: #f39c12;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-weight: normal;
+      color: #bdc3c7;
+      margin-bottom: 30px;
+    }
+
+    .form-container {
+      background-color: #1f1f2e;
+      padding: 30px;
+      border-radius: 16px;
+      display: inline-block;
+      box-shadow: 0 0 20px rgba(255, 255, 0, 0.2);
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+      color: #f39c12;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      border: none;
+      width: 80%;
+    }
+
+    button {
+      background-color: #d35400;
+      color: white;
+      padding: 12px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background-color: #e67e22;
+    }
+
+    .result {
+      font-size: 1.2em;
+      color: #f1c40f;
+      background-color: #1f1f2e;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px dashed #f39c12;
+      animation: fadeIn 0.8s ease-in-out;
+      min-width: 350px;
+    }
+
+    .result p {
+      margin: 10px 0;
+      font-size: 1.1em;
+    }
+
+    .preview {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .preview img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #f39c12;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 20px;
+      font-size: 1.1em;
+      color: #00cec9;
+      font-style: italic;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🕵️‍♂️ AI 탐정 시스템</h1>
+  <h2>의심스러운 네 장의 단서를 제출하고 사건을 추리하세요.</h2>
+
+  <div class="form-container">
+    <form action="/predict" method="post" enctype="multipart/form-data" onsubmit="showLoading()">
+      <label>1️⃣ 숫자 단서</label>
+      <input type="file" name="digit" accept="image/*" onchange="previewImage(event, 'digitPreview')" required>
+      <div class="preview" id="digitPreview"></div>
+
+      <label>2️⃣ 성별 단서</label>
+      <input type="file" name="gender" accept="image/*" onchange="previewImage(event, 'genderPreview')" required>
+      <div class="preview" id="genderPreview"></div>
+
+      <label>3️⃣ 감정 단서</label>
+      <input type="file" name="emotion" accept="image/*" onchange="previewImage(event, 'emotionPreview')" required>
+      <div class="preview" id="emotionPreview"></div>
+
+      <label>4️⃣ 마스크 단서</label>
+      <input type="file" name="mask" accept="image/*" onchange="previewImage(event, 'maskPreview')" required>
+      <div class="preview" id="maskPreview"></div>
+
+      <button type="submit">🔍 단서 분석 시작</button>
+    </form>
+  </div>
+
+  <div id="loading">AI 탐정이 단서를 분석 중입니다...</div>
+
+  {% if result_digit is defined and result_gender is defined and result_emotion is defined and result_mask is defined %}
+  <div style="display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 40px;">
+    <!-- 결과 텍스트 -->
+    <div class="result">
+      <p>🧩 숫자 단서 추정: <strong>{{ result_digit }}</strong></p>
+      <p>👤 성별 단서 추정: <strong>{{ result_gender }}</strong></p>
+      <p>😠 감정 단서 추정: <strong>{{ result_emotion }}</strong></p>
+      <p>😷 마스크 단서 추정: <strong>{{ result_mask }}</strong></p>
+    </div>
+
+    <!-- 탐정 이미지 -->
+    <div>
+      <img src="{{ url_for('static', filename='1.jpg') }}" alt="탐정 이미지" style="width: 180px; border-radius: 12px; border: 3px solid #f39c12;">
+    </div>
+  </div>
+
+  <!-- 범인 멘트 -->
+  <p style="margin-top: 20px; font-size: 1.5em; color: #f1c40f; font-weight: bold;">
+    🕵️‍♂️ 범인은... 바로 너!
+  </p>
+  {% endif %}
+
+  <script>
+    function previewImage(event, previewId) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function () {
+        const img = document.createElement('img');
+        img.src = reader.result;
+        const previewDiv = document.getElementById(previewId);
+        previewDiv.innerHTML = '';
+        previewDiv.appendChild(img);
+      };
+      if (file) {
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
